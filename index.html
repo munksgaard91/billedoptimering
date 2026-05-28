@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Best One – Billedoptimering</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 141'%3E%3Cpath fill='%23225581' d='M94.6,53.8c-4.3-7-10.3-12.4-18-16.3C68.9,33.6,60.2,31.6,50.5,31.6c-6.8,0-13,1-18.8,2.9V0H0l0.1,74.9C0.1,75.8,0,76.7,0,77.7c0,8.9,2.2,16.9,6.5,23.9c4.3,7,10.4,12.5,18.1,16.5c7.7,4,16.3,5.9,25.9,5.9c9.7,0,18.4-2,26.1-5.9c7.7-4,13.7-9.5,18-16.5c4.3-7,6.4-15,6.4-23.9S98.9,60.8,94.6,53.8z M64.1,97.4c-3.5,3.8-8,5.7-13.5,5.7c-5.5,0-10-1.9-13.5-5.7c-3.5-3.8-5.3-9-5.3-15.8c0-6.6,1.8-11.8,5.3-15.5c3.5-3.7,8-5.6,13.5-5.6c5.5,0,10,1.9,13.5,5.6c3.5,3.7,5.3,8.9,5.3,15.5C69.4,88.4,67.6,93.6,64.1,97.4z'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    :root {
+      --blue:#225581; --blue-dark:#1a4267; --blue-light:#e8f0f8;
+      --border:#d8e4ef; --text:#1a2733; --muted:#6b8299;
+      --bg:#f5f8fb; --white:#ffffff;
+      --green:#2a7d4f; --green-bg:#eaf4ee;
+      --red:#b94040; --red-bg:#fbeaea;
+      --orange:#a06a00; --orange-bg:#fff8e6;
+      --radius:10px; --shadow:0 2px 12px rgba(34,85,129,.08);
+      --font:'Montserrat',sans-serif;
+    }
+    body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; }
+
+    /* ── HEADER ── */
+    header { background:var(--blue); padding:0 32px; height:60px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    .header-tag { font-size:11px; color:rgba(255,255,255,.6); font-weight:400; letter-spacing:.5px; text-transform:uppercase; }
+
+    /* ── GLOBAL PROGRESS BAR ── */
+    #gbar { position:fixed; top:0; left:0; right:0; height:3px; z-index:999; display:none; }
+    #gbar.on { display:block; }
+    #gfill { height:100%; background:linear-gradient(90deg,#225581,#4a8ec2); width:0%; transition:width .3s ease; }
+
+    /* ── MAIN ── */
+    main { flex:1; max-width:900px; width:100%; margin:0 auto; padding:40px 24px 60px; }
+    h1 { font-size:22px; font-weight:600; color:var(--blue); margin-bottom:4px; }
+    .subtitle { font-size:14px; color:var(--muted); margin-bottom:32px; }
+
+    /* ── DROP ZONE ── */
+    .drop-zone { border:2px dashed var(--border); border-radius:var(--radius); background:var(--white); padding:64px 24px; text-align:center; cursor:pointer; transition:border-color .2s,background .2s,opacity .15s; box-shadow:var(--shadow); position:relative; }
+    .drop-zone:hover { border-color:var(--blue); background:var(--blue-light); opacity:.93; }
+    .drop-zone.drag-over { border-color:var(--blue); background:var(--blue-light); }
+    .drop-zone input[type=file] { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+    .drop-icon { width:48px; height:48px; background:var(--blue-light); border-radius:12px; display:flex; align-items:center; justify-content:center; margin:0 auto 14px; transition:background .2s; }
+    .drop-zone:hover .drop-icon { background:rgba(34,85,129,.15); }
+    .drop-icon svg { width:24px; height:24px; color:var(--blue); }
+    .drop-title { font-size:15px; font-weight:600; color:var(--text); margin-bottom:5px; }
+    .drop-sub { font-size:13px; color:var(--muted); }
+    .drop-sub strong { color:var(--blue); font-weight:500; }
+    .drop-zone.loading { pointer-events:none; }
+    .drop-zone.loading > :not(.drop-loading) { opacity:.25; }
+    .drop-loading { display:none; position:absolute; inset:0; align-items:center; justify-content:center; flex-direction:column; gap:12px; }
+    .drop-zone.loading .drop-loading { display:flex; }
+    .spinner { width:30px; height:30px; border:3px solid var(--border); border-top-color:var(--blue); border-radius:50%; animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .loading-text { font-size:13px; font-weight:500; color:var(--blue); }
+
+    /* ── GLOBAL DRAG OVERLAY ── */
+    #drag-overlay { display:none; position:fixed; inset:0; background:rgba(34,85,129,.08); border:3px dashed var(--blue); z-index:500; pointer-events:none; align-items:center; justify-content:center; }
+    #drag-overlay.on { display:flex; }
+    .drag-label { font-size:20px; font-weight:700; color:var(--blue); background:var(--white); padding:18px 36px; border-radius:var(--radius); box-shadow:var(--shadow); }
+
+    /* ── STATUS BAR ── */
+    #status-bar { margin-top:16px; padding:10px 16px; background:var(--white); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); font-size:12px; color:var(--muted); display:none; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    #status-bar.on { display:flex; }
+    .sb-left { display:flex; gap:16px; align-items:center; }
+    .sb-stat strong { color:var(--text); }
+    .sb-saving { font-weight:600; color:var(--green); background:var(--green-bg); padding:2px 10px; border-radius:20px; }
+
+    /* ── FILE LIST ── */
+    #file-list { margin-top:10px; display:flex; flex-direction:column; gap:8px; }
+    .file-card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; display:flex; align-items:flex-start; gap:12px; box-shadow:var(--shadow); animation:fadeUp .18s ease; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+
+    .thumb-wrap { position:relative; flex-shrink:0; cursor:pointer; }
+    .thumb { width:48px; height:48px; border-radius:6px; object-fit:cover; background:var(--bg); border:1px solid var(--border); display:block; }
+    .thumb-hint { position:absolute; inset:0; border-radius:6px; background:rgba(34,85,129,.55); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .15s; }
+    .thumb-wrap:hover .thumb-hint { opacity:1; }
+    .thumb-hint svg { width:16px; height:16px; color:#fff; }
+
+    .file-body { flex:1; min-width:0; }
+    .name-row { display:flex; align-items:center; gap:6px; margin-bottom:3px; }
+    .name-disp { font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:text; flex:1; min-width:0; }
+    .name-disp:hover { color:var(--blue); }
+    .name-inp { display:none; font-family:var(--font); font-size:13px; font-weight:500; border:1px solid var(--blue); border-radius:5px; padding:2px 7px; color:var(--text); outline:none; flex:1; min-width:0; background:var(--white); }
+    .name-inp.on { display:block; }
+    .name-disp.off { display:none; }
+    .edit-btn { flex-shrink:0; background:none; border:none; cursor:pointer; padding:2px; color:var(--muted); border-radius:4px; display:flex; }
+    .edit-btn:hover { color:var(--blue); background:var(--blue-light); }
+    .edit-btn svg { width:12px; height:12px; }
+
+    .file-meta { font-size:12px; color:var(--muted); display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:4px; }
+    .pbar { height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+    .pfill { height:100%; background:var(--blue); border-radius:2px; width:0%; transition:width .3s ease; }
+
+    .file-actions { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+    .per-q { font-family:var(--font); font-size:11px; border:1px solid var(--border); border-radius:5px; padding:3px 6px; background:var(--white); color:var(--text); cursor:pointer; outline:none; }
+    .per-q:focus { border-color:var(--blue); }
+    .per-q.ov { border-color:var(--blue); color:var(--blue); background:var(--blue-light); font-weight:600; }
+    .icon-btn { background:none; border:1px solid var(--border); border-radius:6px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--muted); transition:all .15s; flex-shrink:0; }
+    .icon-btn:hover { border-color:var(--red); color:var(--red); background:var(--red-bg); }
+    .icon-btn svg { width:13px; height:13px; }
+    .badge { font-size:11px; font-weight:600; padding:2px 9px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
+    .s-wait { background:var(--bg); color:var(--muted); }
+    .s-work { background:var(--orange-bg); color:var(--orange); animation:pulse 1.2s ease-in-out infinite; }
+    .s-done { background:var(--green-bg); color:var(--green); }
+    .s-err  { background:var(--red-bg); color:var(--red); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+    /* ── QUALITY PANEL ── */
+    #qpanel { display:none; margin-top:16px; background:var(--white); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+    #qpanel.on { display:block; }
+    .ph { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+    .pt { font-size:13px; font-weight:600; color:var(--text); }
+    .ps { font-size:12px; color:var(--muted); margin-top:1px; }
+    .qbtns { display:flex; gap:6px; }
+    .qbtn { font-family:var(--font); font-size:12px; font-weight:500; padding:6px 14px; border-radius:6px; border:1px solid var(--border); background:var(--white); color:var(--text); cursor:pointer; transition:all .15s; display:flex; flex-direction:column; align-items:center; gap:2px; line-height:1.3; }
+    .qbtn .ql { font-weight:600; }
+    .qbtn .qs { font-size:10px; color:var(--muted); }
+    .qbtn:hover { border-color:var(--blue); color:var(--blue); }
+    .qbtn.on { background:var(--blue); border-color:var(--blue); color:var(--white); }
+    .qbtn.on .qs { color:rgba(255,255,255,.7); }
+    .est-list { padding:4px 0; max-height:240px; overflow-y:auto; }
+    .est-row { display:flex; align-items:center; gap:10px; padding:8px 20px; border-bottom:1px solid var(--bg); font-size:12px; }
+    .est-row:last-child { border-bottom:none; }
+    .en { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text); font-weight:500; }
+    .eo { color:var(--muted); min-width:58px; text-align:right; }
+    .ea { color:var(--border); }
+    .ef { min-width:58px; text-align:right; font-weight:600; }
+    .es { min-width:65px; text-align:right; font-size:11px; padding:2px 7px; border-radius:20px; }
+    .sh { background:var(--green-bg); color:var(--green); }
+    .sm { background:var(--orange-bg); color:var(--orange); }
+    .sl { background:var(--bg); color:var(--muted); }
+    .pf { padding:10px 20px; background:var(--bg); border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .ptot { font-size:12px; color:var(--muted); }
+    .ptot strong { color:var(--text); font-weight:600; }
+    .pnote { font-size:11px; color:var(--muted); font-style:italic; }
+
+    /* ── ACTIONS ── */
+    .actions { margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
+    .btn { font-family:var(--font); font-size:13px; font-weight:500; border:none; border-radius:8px; padding:10px 20px; cursor:pointer; transition:background .15s,transform .1s,opacity .15s; display:inline-flex; align-items:center; gap:7px; }
+    .btn:active { transform:scale(.98); }
+    .btn-p { background:var(--blue); color:var(--white); }
+    .btn-p:hover { background:var(--blue-dark); }
+    .btn-p:disabled { opacity:.4; cursor:not-allowed; }
+    .btn-s { background:var(--white); color:var(--text); border:1px solid var(--border); }
+    .btn-s:hover { background:var(--bg); }
+    .btn-d { background:var(--white); color:var(--red); border:1px solid var(--border); }
+    .btn-d:hover { background:var(--red-bg); }
+    .btn svg { width:15px; height:15px; }
+
+    /* ── SUMMARY ── */
+    #summary { display:none; margin-top:14px; background:var(--green-bg); border:1px solid #b6dfc6; border-radius:var(--radius); padding:13px 18px; font-size:13px; color:var(--green); font-weight:500; align-items:center; gap:10px; }
+    #summary.on { display:flex; }
+    #summary svg { width:18px; height:18px; flex-shrink:0; }
+
+    /* ── PREVIEW MODAL ── */
+    #modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:1000; align-items:center; justify-content:center; padding:24px; }
+    #modal.on { display:flex; }
+    .mbox { background:var(--white); border-radius:12px; overflow:hidden; max-width:1100px; width:100%; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 60px rgba(0,0,0,.3); }
+    .mhead { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .mtitle { font-size:14px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .mclose { background:none; border:none; cursor:pointer; color:var(--muted); padding:4px; border-radius:6px; display:flex; }
+    .mclose:hover { background:var(--bg); color:var(--text); }
+    .mclose svg { width:20px; height:20px; }
+    .mpanes { display:grid; grid-template-columns:1fr 1fr; flex:1; overflow:hidden; }
+    .mpane { display:flex; flex-direction:column; overflow:hidden; }
+    .mpane + .mpane { border-left:1px solid var(--border); }
+    .mlabel { padding:8px 14px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); background:var(--bg); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+    .msize { font-weight:400; text-transform:none; letter-spacing:0; }
+    .mimg-wrap { flex:1; overflow:auto; display:flex; align-items:center; justify-content:center; padding:12px; background:var(--bg); min-height:300px; }
+    .mimg-wrap img { max-width:100%; max-height:60vh; object-fit:contain; border-radius:4px; }
+    .mwait { font-size:12px; color:var(--muted); text-align:center; line-height:1.6; }
+
+    footer { text-align:center; padding:18px; font-size:12px; color:var(--muted); border-top:1px solid var(--border); }
+  </style>
+</head>
+<body>
+
+<div id="drag-overlay"><div class="drag-label">Slip billederne her</div></div>
+<div id="gbar"><div id="gfill"></div></div>
+
+<header>
+  <svg viewBox="0 0 727 141" style="height:26px;width:auto" xmlns="http://www.w3.org/2000/svg">
+    <path fill="#fff" d="M212.4,93.2h-64.6c1.3,4.6,3.9,8.1,7.6,10.6c3.8,2.5,8.5,3.7,14.2,3.7c4.3,0,8-.6,11.1-1.8c3.1-1.2,6.3-3.2,9.4-5.9l16.4,17.1c-8.6,9.6-21.3,14.4-37.9,14.4c-10.4,0-19.5-2-27.4-5.9c-7.9-3.9-14-9.4-18.3-16.4c-4.3-7-6.5-14.9-6.5-23.8c0-8.7,2.1-16.6,6.3-23.5c4.2-6.9,10-12.4,17.5-16.3c7.4-3.9,15.8-5.9,25.1-5.9c8.9,0,16.9,1.8,24.1,5.5c7.2,3.7,12.9,9,17.1,15.9c4.2,6.9,6.3,15.2,6.3,24.7C212.9,85.7,212.7,88.3,212.4,93.2zM153.4,65.6c-3.2,2.7-5.3,6.5-6.2,11.2h36.4c-.9-4.7-2.9-8.4-6.1-11.2c-3.2-2.7-7.2-4.1-12.1-4.1C160.6,61.5,156.6,62.9,153.4,65.6z"/>
+    <path fill="#fff" d="M237.4,128.7c-7.2-1.7-13-3.9-17.4-6.6l9.3-21.3c4,2.5,8.9,4.5,14.4,6c5.6,1.5,11.1,2.2,16.6,2.2c5,0,8.6-.5,10.7-1.6c2.1-1,3.2-2.5,3.2-4.5s-1.3-3.4-3.9-4.2c-2.6-.8-6.6-1.6-12.2-2.4c-7.1-.9-13.1-2-18.1-3.4c-5-1.4-9.3-4-12.9-7.9c-3.6-3.8-5.4-9.2-5.4-16.1c0-5.7,1.7-10.7,5.1-15.2c3.4-4.4,8.3-7.9,14.8-10.5c6.5-2.6,14.3-3.9,23.4-3.9c6.5,0,12.8.7,19.2,2c6.3,1.3,11.6,3.2,15.9,5.6l-9.3,21.2c-7.9-4.4-16.4-6.6-25.6-6.6c-4.9,0-8.5.6-10.8,1.7c-2.3,1.1-3.4,2.7-3.4,4.5c0,2.1,1.3,3.5,3.8,4.3c2.5.8,6.7,1.7,12.5,2.5c7.3,1.1,13.4,2.4,18.2,3.8c4.8,1.4,9,4,12.5,7.8c3.6,3.8,5.3,9,5.3,15.8c0,5.6-1.7,10.6-5.1,15c-3.4,4.4-8.4,7.9-15,10.4c-6.6,2.5-14.6,3.8-23.9,3.8C251.9,131.2,244.6,130.4,237.4,128.7z"/>
+    <path fill="#fff" d="M310.4,44.2V21h31.2v23.1h20.3v23.3h-20.3V97c0,3.2.8,5.7,2.5,7.5c1.7,1.8,4,2.7,6.8,2.7c3.6,0,6.8-.9,9.5-2.8l7.7,21.8c-2.6,1.6-5.8,2.9-9.6,3.8c-3.8.9-7.8,1.3-12.1,1.3c-11.6,0-20.5-2.8-26.7-8.5c-6.2-5.7-9.3-14.2-9.3-25.4V44.2z"/>
+    <path fill="#fff" d="M418.3,123.5c-9.7-5.1-17.3-12.2-22.8-21.3c-5.5-9.1-8.3-19.3-8.3-30.7s2.8-21.6,8.3-30.7c5.5-9.1,13.1-16.2,22.8-21.3c9.7-5.1,20.6-7.7,32.7-7.7s23,2.6,32.7,7.7c9.7,5.1,17.3,12.2,22.8,21.3c5.5,9.1,8.3,19.3,8.3,30.7s-2.8,21.6-8.3,30.7c-5.5,9.1-13.1,16.2-22.8,21.3c-9.7,5.1-20.6,7.7-32.7,7.7S428,128.7,418.3,123.5zM466.8,100.2c4.7-2.7,8.4-6.6,11.2-11.6c2.7-5,4.1-10.7,4.1-17.1s-1.4-12.2-4.1-17.1c-2.7-5-6.5-8.8-11.2-11.6c-4.7-2.7-10-4.1-15.7-4.1c-5.8,0-11,1.4-15.7,4.1c-4.7,2.7-8.4,6.6-11.2,11.6c-2.7,5-4.1,10.7-4.1,17.1s1.4,12.2,4.1,17.1c2.7,5,6.5,8.8,11.2,11.6c4.7,2.7,9.9,4.1,15.7,4.1C456.8,104.3,462.1,103,466.8,100.2z"/>
+    <path fill="#fff" d="M606.5,50.7c6.7,6.6,10.1,16.5,10.1,29.7v50.8h-31.2V85.5c0-12.1-4.9-18.2-14.6-18.2c-5.4,0-9.7,1.8-12.9,5.2c-3.2,3.5-4.8,8.7-4.8,15.7v43h-31.2V42.3h29.7V52c3.5-3.6,7.7-6.4,12.5-8.3c4.8-1.9,10.1-2.9,15.7-2.9C590.9,40.9,599.8,44.2,606.5,50.7z"/>
+    <path fill="#fff" d="M719.6,93.2H655c1.3,4.6,3.9,8.1,7.6,10.6c3.8,2.5,8.5,3.7,14.2,3.7c4.3,0,8-.6,11.1-1.8c3.1-1.2,6.3-3.2,9.4-5.9l16.4,17.1c-8.6,9.6-21.3,14.4-37.9,14.4c-10.4,0-19.5-2-27.4-5.9c-7.9-3.9-14-9.4-18.3-16.4c-4.3-7-6.5-14.9-6.5-23.8c0-8.7,2.1-16.6,6.3-23.5c4.2-6.9,10-12.4,17.5-16.3c7.4-3.9,15.8-5.9,25.1-5.9c8.9,0,16.9,1.8,24.1,5.5c7.2,3.7,12.9,9,17.1,15.9c4.2,6.9,6.3,15.2,6.3,24.7C720.1,85.7,719.9,88.3,719.6,93.2zM660.7,65.6c-3.2,2.7-5.3,6.5-6.2,11.2h36.4c-.9-4.7-2.9-8.4-6.2-11.2c-3.2-2.7-7.2-4.1-12.1-4.1C667.9,61.5,663.9,62.9,660.7,65.6z"/>
+    <path fill="#fff" d="M102.9,61c-4.3-7-10.3-12.4-18-16.3c-7.7-3.9-16.4-5.9-26.1-5.9c-6.8,0-13,1-18.8,2.9V7.2H8.3L8.4,82.1c0,.9-.1,1.8-.1,2.8c0,8.9,2.2,16.9,6.5,23.9c4.3,7,10.4,12.5,18.1,16.5c7.7,4,16.3,5.9,25.9,5.9c9.7,0,18.4-2,26.1-5.9c7.7-4,13.7-9.5,18-16.5c4.3-7,6.4-15,6.4-23.9S107.2,68,102.9,61zM72.4,100.6c-3.5,3.8-8,5.7-13.5,5.7s-10-1.9-13.5-5.7c-3.5-3.8-5.3-9-5.3-15.8c0-6.6,1.8-11.8,5.3-15.5c3.5-3.7,8-5.6,13.5-5.6s10,1.9,13.5,5.6c3.5,3.7,5.3,8.9,5.3,15.5C77.6,91.6,75.9,96.8,72.4,100.6z"/>
+  </svg>
+  <span class="header-tag">Billedoptimering</span>
+</header>
+
+<main>
+  <h1>Billedoptimering</h1>
+  <p class="subtitle">Upload dine billeder – værktøjet resizer, komprimerer og pakker dem klar til brug på hjemmesider.</p>
+
+  <div class="drop-zone" id="drop-zone">
+    <input type="file" id="file-input"
+      accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/tiff,image/avif,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tif,.tiff,.avif,.heic,.heif"
+      multiple />
+    <div class="drop-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+    </div>
+    <div class="drop-title">Træk billeder hertil eller klik for at vælge</div>
+    <div class="drop-sub">Understøtter <strong>JPG, PNG, HEIC, WEBP</strong> og de fleste andre billedformater</div>
+    <div class="drop-loading"><div class="spinner"></div><div class="loading-text">Analyserer billeder…</div></div>
+  </div>
+
+  <div id="status-bar">
+    <div class="sb-left">
+      <span class="sb-stat"><strong id="sb-count">0</strong> billeder</span>
+      <span class="sb-stat">Originalt: <strong id="sb-orig">–</strong></span>
+      <span class="sb-stat">Est. output: <strong id="sb-est">–</strong></span>
+    </div>
+    <span class="sb-saving" id="sb-saving" style="display:none"></span>
+  </div>
+
+  <div id="file-list"></div>
+
+  <div id="qpanel">
+    <div class="ph">
+      <div><div class="pt">Vælg standardkvalitet</div><div class="ps">Estimerede outputstørrelser – kan overstyres pr. billede</div></div>
+      <div class="qbtns">
+        <button class="qbtn" data-q="70"><span class="ql">God</span><span class="qs">maks. 250 KB</span></button>
+        <button class="qbtn on" data-q="82"><span class="ql">Høj</span><span class="qs">maks. 350 KB</span></button>
+        <button class="qbtn" data-q="92"><span class="ql">Maksimal</span><span class="qs">maks. 500 KB</span></button>
+      </div>
+    </div>
+    <div class="est-list" id="est-list"></div>
+    <div class="pf"><div class="ptot" id="ptot"></div><div class="pnote">Estimater – faktisk størrelse kan variere lidt</div></div>
+  </div>
+
+  <div class="actions" id="actions" style="display:none">
+    <button class="btn btn-p" id="btn-run" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      Optimer alle billeder
+    </button>
+    <button class="btn btn-s" id="btn-add">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Tilføj flere
+    </button>
+    <button class="btn btn-s" id="btn-dl" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download ZIP
+    </button>
+    <button class="btn btn-d" id="btn-clear">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      Ryd alt
+    </button>
+  </div>
+
+  <div id="summary">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    <span id="sum-text"></span>
+  </div>
+</main>
+
+<footer>Best One A/S &nbsp;·&nbsp; Internt supportværktøj &nbsp;·&nbsp; Alle billeder behandles lokalt i din browser</footer>
+
+<!-- PREVIEW MODAL -->
+<div id="modal">
+  <div class="mbox">
+    <div class="mhead">
+      <span class="mtitle" id="mtitle">Forhåndsvisning</span>
+      <button class="mclose" id="mclose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="mpanes">
+      <div class="mpane">
+        <div class="mlabel">Original <span class="msize" id="m-orig-size"></span></div>
+        <div class="mimg-wrap"><img id="m-orig" src="" alt="Original" /></div>
+      </div>
+      <div class="mpane">
+        <div class="mlabel">Optimeret <span class="msize" id="m-opt-size"></span></div>
+        <div class="mimg-wrap">
+          <div class="mwait" id="m-wait">Billedet er endnu ikke optimeret.<br/>Kør optimering først for at se resultatet.</div>
+          <img id="m-opt" src="" alt="Optimeret" style="display:none" />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="file-input-extra"
+  accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/tiff,image/avif,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tif,.tiff,.avif,.heic,.heif"
+  multiple style="display:none" />
+
+<script>
+'use strict';
+
+// ── KONSTANTER ────────────────────────────────────────────────────────────────
+const MAX_LONG = 1920, MAX_SHORT = 1280, MIN_Q = 0.30;
+const MAX_KB_MAP = { 70:250, 82:350, 92:500 };
+const EST_F      = { 70:22,  82:38,  92:58  }; // KB/megapixel
+let   curMaxKb   = 350;
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+// { file, outputName, origSize, blob, finalKB, status, dims, thumbUrl, qOvr }
+let files = [], selQ = 0.82, zipBlob = null;
+
+// ── DOM REFS ──────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const dropZone   = $('drop-zone'),  fileInput  = $('file-input');
+const fileInputX = $('file-input-extra');
+const fileList   = $('file-list'),  statusBar  = $('status-bar');
+const sbCount=$('sb-count'), sbOrig=$('sb-orig'), sbEst=$('sb-est'), sbSaving=$('sb-saving');
+const qPanel=$('qpanel'), estList=$('est-list'), ptot=$('ptot');
+const actions=$('actions'), btnRun=$('btn-run'), btnAdd=$('btn-add');
+const btnDl=$('btn-dl'), btnClear=$('btn-clear');
+const summary=$('summary'), sumText=$('sum-text');
+const gbar=$('gbar'), gfill=$('gfill');
+const modal=$('modal'), mclose=$('mclose'), mtitle=$('mtitle');
+const mOrig=$('m-orig'), mOpt=$('m-opt'), mWait=$('m-wait');
+const mOrigSize=$('m-orig-size'), mOptSize=$('m-opt-size');
+const dragOverlay=$('drag-overlay');
+
+// ── GLOBAL DRAG ───────────────────────────────────────────────────────────────
+let dragTimer = null;
+document.addEventListener('dragenter', e => {
+  if (![...e.dataTransfer.types].includes('Files')) return;
+  clearTimeout(dragTimer);
+  dragOverlay.classList.add('on');
+});
+document.addEventListener('dragleave', () => {
+  clearTimeout(dragTimer);
+  dragTimer = setTimeout(() => dragOverlay.classList.remove('on'), 80);
+});
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  dragOverlay.classList.remove('on');
+  const fs = [...e.dataTransfer.files].filter(validImage);
+  if (fs.length) addFiles(fs);
+});
+
+// ── DROP ZONE ─────────────────────────────────────────────────────────────────
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); });
+fileInput.addEventListener('change', () => { addFiles([...fileInput.files]); fileInput.value=''; });
+fileInputX.addEventListener('change', () => { addFiles([...fileInputX.files]); fileInputX.value=''; });
+btnAdd.addEventListener('click', () => fileInputX.click());
+
+function validImage(f) {
+  return f.type.startsWith('image/') || /\.(jpe?g|png|webp|gif|bmp|tiff?|avif|heic|heif)$/i.test(f.name);
+}
+
+// ── ADD FILES ─────────────────────────────────────────────────────────────────
+function addFiles(incoming) {
+  const fresh = incoming.filter(f => validImage(f) && !files.find(x => x.file.name===f.name && x.origSize===f.size));
+  if (!fresh.length) return;
+
+  setDropLoading(true);
+  fresh.forEach(f => {
+    files.push({ file:f, outputName:f.name.replace(/\.[^.]+$/,''), origSize:f.size,
+                 blob:null, finalKB:null, status:'wait', dims:null, thumbUrl:null, qOvr:null });
+  });
+
+  // Load thumbnails upfront (store as objectURLs, revoke on clear)
+  fresh.forEach((f, fi) => {
+    const idx = files.length - fresh.length + fi;
+    const url = URL.createObjectURL(f);
+    files[idx].thumbUrl = url;
+  });
+
+  renderList();
+  actions.style.display = 'flex';
+  btnRun.disabled = false;
+  btnDl.style.display = 'none';
+  summary.classList.remove('on');
+  zipBlob = null;
+  loadDims();
+}
+
+// ── THUMBNAILS / DIMS ─────────────────────────────────────────────────────────
+function loadDims() {
+  qPanel.classList.remove('on');
+  estList.innerHTML = '<div style="padding:14px 20px;font-size:12px;color:var(--muted)">Analyserer billeder…</div>';
+  qPanel.classList.add('on');
+
+  let pending = files.filter(f => !f.dims).length;
+  if (!pending) { setDropLoading(false); renderEstimates(); updateSB(); return; }
+
+  files.forEach((f, i) => {
+    if (f.dims) return;
+    const img = new Image();
+    img.onload = () => {
+      files[i].dims = calcDims(img.naturalWidth, img.naturalHeight);
+      if (!--pending) { setDropLoading(false); renderEstimates(); updateSB(); }
+    };
+    img.onerror = () => {
+      files[i].dims = { w:MAX_LONG, h:MAX_SHORT };
+      if (!--pending) { setDropLoading(false); renderEstimates(); updateSB(); }
+    };
+    img.src = f.thumbUrl;
+  });
+}
+
+// ── LOADING HELPERS ───────────────────────────────────────────────────────────
+function setDropLoading(on) { dropZone.classList.toggle('loading', on); }
+function setGP(pct) {
+  if (pct === null) { gbar.classList.remove('on'); gfill.style.width='0%'; }
+  else { gbar.classList.add('on'); gfill.style.width=pct+'%'; }
+}
+
+// ── QUALITY BUTTONS ───────────────────────────────────────────────────────────
+document.querySelectorAll('.qbtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.qbtn').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    selQ = parseInt(btn.dataset.q) / 100;
+    curMaxKb = MAX_KB_MAP[parseInt(btn.dataset.q)];
+    renderEstimates(); updateSB();
+  });
+});
+
+// ── STATUS BAR ────────────────────────────────────────────────────────────────
+function updateSB() {
+  if (!files.length) { statusBar.classList.remove('on'); return; }
+  statusBar.classList.add('on');
+  sbCount.textContent = files.length;
+  const totalOrig = files.reduce((s,f) => s+f.origSize, 0);
+  sbOrig.textContent = fmtBytes(totalOrig);
+
+  let totalEst = 0;
+  files.forEach(f => {
+    if (f.status==='done' && f.finalKB) { totalEst += f.finalKB*1024; return; }
+    const q = f.qOvr ?? selQ;
+    const qk = Math.round(q*100);
+    const mk = f.qOvr ? MAX_KB_MAP[qk] : curMaxKb;
+    const dims = f.dims || { w:MAX_LONG, h:MAX_SHORT };
+    const kb = Math.min(Math.max(Math.round((dims.w*dims.h/1e6)*(EST_F[qk]||38)), 30), mk);
+    totalEst += kb*1024;
+  });
+  sbEst.textContent = fmtBytes(totalEst);
+  const sv = Math.round((1-totalEst/totalOrig)*100);
+  if (sv>0) { sbSaving.textContent=`ca. −${sv}%`; sbSaving.style.display=''; }
+  else sbSaving.style.display='none';
+}
+
+// ── RENDER ESTIMATES ──────────────────────────────────────────────────────────
+function renderEstimates() {
+  const qk = Math.round(selQ*100);
+  estList.innerHTML='';
+  let totEst=0, totOrig=0;
+
+  files.forEach(f => {
+    const isActual = f.status==='done' && f.finalKB;
+    let kb;
+    if (isActual) {
+      kb = f.finalKB;
+    } else {
+      const q = f.qOvr ?? selQ;
+      const fqk = Math.round(q*100);
+      const mk = f.qOvr ? MAX_KB_MAP[fqk] : curMaxKb;
+      const dims = f.dims || { w:MAX_LONG, h:MAX_SHORT };
+      kb = Math.min(Math.max(Math.round((dims.w*dims.h/1e6)*(EST_F[fqk]||38)), 30), mk);
+    }
+    totEst += kb; totOrig += f.origSize;
+
+    const origDisp = f.origSize>=1048576 ? (f.origSize/1048576).toFixed(1)+' MB' : Math.round(f.origSize/1024)+' KB';
+    const sv = Math.round((1-(kb*1024)/f.origSize)*100);
+    const sc = sv>=70?'sh':sv>=40?'sm':'sl';
+    const fc = kb<=200?'var(--green)':kb<=380?'var(--orange)':'var(--text)';
+    const row = document.createElement('div');
+    row.className='est-row';
+    row.innerHTML=`<span class="en" title="${esc(f.file.name)}">${esc(f.file.name)}</span><span class="eo">${origDisp}</span><span class="ea">→</span><span class="ef" style="color:${fc}">${kb} KB</span><span class="es ${sc}">${sv>0?'-'+sv+'%':'0%'}${isActual?' ✓':''}</span>`;
+    estList.appendChild(row);
+  });
+
+  const origKB = Math.round(totOrig/1024);
+  const origDisp = totOrig>=1048576 ? (totOrig/1048576).toFixed(1)+' MB' : origKB+' KB';
+  const sv = Math.round((1-totEst/origKB)*100);
+  ptot.innerHTML=`<strong>${files.length} billede${files.length>1?'r':''}</strong> &nbsp;·&nbsp; ${origDisp} → <strong style="color:var(--green)">${totEst>1024?(totEst/1024).toFixed(1)+' MB':totEst+' KB'}</strong> &nbsp;·&nbsp; <span style="color:var(--green)">ca. ${sv}% reduceret</span>`;
+}
+
+// ── RENDER FILE LIST ──────────────────────────────────────────────────────────
+function renderList() {
+  fileList.innerHTML='';
+  files.forEach((f,i) => {
+    const sc={wait:'s-wait',work:'s-work',done:'s-done',err:'s-err'}[f.status];
+    const sl={wait:'Klar',work:'Behandler…',done:'Færdig',err:'Fejl'}[f.status];
+    const qv = f.qOvr!==null ? Math.round(f.qOvr*100) : '';
+    const oc = f.qOvr!==null ? ' ov' : '';
+
+    const card = document.createElement('div');
+    card.className='file-card'; card.id=`c${i}`;
+    card.innerHTML=`
+      <div class="thumb-wrap" data-i="${i}">
+        <img class="thumb" id="th${i}" src="${f.thumbUrl||''}" alt="" />
+        <div class="thumb-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+      </div>
+      <div class="file-body">
+        <div class="name-row">
+          <span class="name-disp" id="nd${i}">${esc(f.outputName)}.jpg</span>
+          <input class="name-inp" id="ni${i}" type="text" value="${esc(f.outputName)}" />
+          <button class="edit-btn" data-i="${i}" title="Omdøb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        </div>
+        <div class="file-meta" id="fm${i}"><span>${fmtBytes(f.origSize)}</span></div>
+        <div class="pbar"><div class="pfill" id="pf${i}"></div></div>
+      </div>
+      <div class="file-actions">
+        <select class="per-q${oc}" data-i="${i}">
+          <option value="">Standard</option>
+          <option value="70"${qv===70?' selected':''}>God (250 KB)</option>
+          <option value="82"${qv===82?' selected':''}>Høj (350 KB)</option>
+          <option value="92"${qv===92?' selected':''}>Maks (500 KB)</option>
+        </select>
+        <span class="badge ${sc}" id="b${i}">${sl}</span>
+        <button class="icon-btn rm-btn" data-i="${i}" title="Fjern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>`;
+    fileList.appendChild(card);
+
+    card.querySelector('.thumb-wrap').addEventListener('click', () => openModal(i));
+    card.querySelector('.rm-btn').addEventListener('click', () => removeFile(i));
+    card.querySelector('.per-q').addEventListener('change', e => {
+      const v = e.target.value;
+      files[i].qOvr = v ? parseInt(v)/100 : null;
+      e.target.className='per-q'+(v?' ov':'');
+      if (files[i].status!=='done') files[i].status='wait';
+      renderEstimates(); updateSB();
+    });
+    const nd=$(`nd${i}`), ni=$(`ni${i}`);
+    card.querySelector('.edit-btn').addEventListener('click', () => { nd.classList.add('off'); ni.classList.add('on'); ni.focus(); ni.select(); });
+    ni.addEventListener('blur', () => commitRename(i,ni,nd));
+    ni.addEventListener('keydown', e => { if(e.key==='Enter') ni.blur(); if(e.key==='Escape'){ni.value=files[i].outputName;ni.blur();} });
+  });
+}
+
+function commitRename(i,inp,disp) {
+  const v = inp.value.trim().replace(/\.[^.]+$/,'');
+  if (v) files[i].outputName=v;
+  inp.value=files[i].outputName;
+  disp.textContent=files[i].outputName+'.jpg';
+  disp.classList.remove('off'); inp.classList.remove('on');
+}
+
+function removeFile(i) {
+  // Revoke thumb URL for removed file
+  if (files[i].thumbUrl) URL.revokeObjectURL(files[i].thumbUrl);
+  files.splice(i,1);
+  if (!files.length) {
+    fileList.innerHTML=''; actions.style.display='none';
+    qPanel.classList.remove('on'); statusBar.classList.remove('on');
+    summary.classList.remove('on'); btnDl.style.display='none';
+    return;
+  }
+  renderList(); renderEstimates(); updateSB();
+}
+
+function updateCard(i) {
+  const f=files[i];
+  const sc={wait:'s-wait',work:'s-work',done:'s-done',err:'s-err'}[f.status];
+  const sl={wait:'Klar',work:'Behandler…',done:'Færdig',err:'Fejl'}[f.status];
+  const bEl=$(`b${i}`), fmEl=$(`fm${i}`);
+  if (bEl) { bEl.className=`badge ${sc}`; bEl.textContent=sl; }
+  if (fmEl && f.finalKB) {
+    const sv=Math.round((1-(f.finalKB*1024)/f.origSize)*100);
+    fmEl.innerHTML=`<span>${fmtBytes(f.origSize)}</span><span style="color:var(--green);font-weight:500">→ ${f.finalKB} KB</span><span style="color:var(--muted)">(${sv}% sparet)</span>`;
+  }
+}
+function setProg(i,pct) { const el=$(`pf${i}`); if(el) el.style.width=pct+'%'; }
+
+// ── PREVIEW MODAL ─────────────────────────────────────────────────────────────
+let modalOrigUrl=null, modalOptUrl=null;
+function openModal(i) {
+  const f=files[i];
+  // Clean up previous URLs
+  if (modalOrigUrl) URL.revokeObjectURL(modalOrigUrl);
+  if (modalOptUrl)  URL.revokeObjectURL(modalOptUrl);
+  modalOrigUrl=null; modalOptUrl=null;
+
+  mtitle.textContent=f.outputName+'.jpg';
+  mOrigSize.textContent=fmtBytes(f.origSize);
+
+  modalOrigUrl = URL.createObjectURL(f.file);
+  mOrig.src = modalOrigUrl;
+
+  if (f.blob) {
+    modalOptUrl = URL.createObjectURL(f.blob);
+    mOpt.src=modalOptUrl; mOpt.style.display=''; mWait.style.display='none';
+    mOptSize.textContent=f.finalKB+' KB';
+  } else {
+    mOpt.src=''; mOpt.style.display='none'; mWait.style.display='';
+    mOptSize.textContent='';
+  }
+  modal.classList.add('on');
+}
+function closeModal() {
+  modal.classList.remove('on');
+  if (modalOrigUrl) { URL.revokeObjectURL(modalOrigUrl); modalOrigUrl=null; }
+  if (modalOptUrl)  { URL.revokeObjectURL(modalOptUrl);  modalOptUrl=null; }
+  mOrig.src=''; mOpt.src='';
+}
+mclose.addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if(e.target===modal) closeModal(); });
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+// ── OPTIMER ───────────────────────────────────────────────────────────────────
+btnRun.addEventListener('click', async () => {
+  btnRun.disabled=true; btnDl.style.display='none';
+  summary.classList.remove('on'); zipBlob=null;
+
+  const toRun=files.filter(f=>f.status!=='done');
+  let done=0; setGP(2);
+
+  for (let i=0;i<files.length;i++) {
+    if (files[i].status==='done') continue;
+    files[i].status='work'; updateCard(i); setProg(i,5);
+    const q  = files[i].qOvr ?? selQ;
+    const mk = files[i].qOvr ? MAX_KB_MAP[Math.round(files[i].qOvr*100)] : curMaxKb;
+    try {
+      const blob = await processImage(files[i].file, q, mk, i);
+      files[i].blob=blob; files[i].finalKB=Math.round(blob.size/1024);
+      files[i].status='done'; setProg(i,100); updateCard(i);
+    } catch(err) {
+      console.error(err); files[i].status='err'; updateCard(i); setProg(i,0);
+    }
+    setGP(Math.round((++done/toRun.length)*90));
+  }
+
+  setGP(95); renderEstimates(); updateSB();
+
+  const finished=files.filter(f=>f.status==='done');
+  if (finished.length) {
+    const zip=new JSZip();
+    finished.forEach(f=>zip.file(f.outputName+'.jpg',f.blob));
+    zipBlob=await zip.generateAsync({type:'blob'});
+    setGP(100); setTimeout(()=>setGP(null),600);
+    btnDl.style.display='inline-flex';
+    const tOrig=finished.reduce((s,f)=>s+f.origSize,0);
+    const tFin=finished.reduce((s,f)=>s+f.blob.size,0);
+    const sv=Math.round((1-tFin/tOrig)*100);
+    sumText.textContent=`${finished.length} billede${finished.length>1?'r':''} optimeret – samlet størrelse reduceret med ${sv}% (${fmtBytes(tOrig)} → ${fmtBytes(tFin)})`;
+    summary.classList.add('on');
+  }
+  btnRun.disabled=false; setGP(null);
+});
+
+// ── PROCESS IMAGE ─────────────────────────────────────────────────────────────
+async function processImage(file, quality, maxKb, idx) {
+  let src = file;
+
+  // HEIC → PNG konvertering
+  if (/\.(heic|heif)$/i.test(file.name) || file.type==='image/heic' || file.type==='image/heif') {
+    setProg(idx, 10);
+    const out = await heic2any({ blob:file, toType:'image/png', quality:1 });
+    src = Array.isArray(out) ? out[0] : out;
+  }
+
+  return new Promise((resolve, reject) => {
+    const img=new Image(), url=URL.createObjectURL(src);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      setProg(idx,30);
+      const {w,h}=calcDims(img.naturalWidth,img.naturalHeight);
+      setProg(idx,50);
+      const cv=document.createElement('canvas');
+      cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      setProg(idx,70);
+
+      // Iterativ komprimering som loop (ikke rekursion)
+      compressLoop(cv, quality, maxKb, resolve, reject, idx);
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); reject(new Error('Kunne ikke indlæse billedet')); };
+    img.src=url;
+  });
+}
+
+function compressLoop(canvas, startQ, maxKb, resolve, reject, idx) {
+  let q = startQ;
+  function next() {
+    canvas.toBlob(blob => {
+      if (!blob) { reject(new Error('Canvas fejlede')); return; }
+      if (blob.size/1024 <= maxKb || q <= MIN_Q) { setProg(idx,95); resolve(blob); }
+      else { q = Math.max(MIN_Q, q-0.05); next(); }
+    }, 'image/jpeg', q);
+  }
+  next();
+}
+
+function calcDims(w,h) {
+  const lsc=w>=h, maxW=lsc?MAX_LONG:MAX_SHORT, maxH=lsc?MAX_SHORT:MAX_LONG;
+  if (w<=maxW && h<=maxH) return {w,h};
+  const sc=Math.min(maxW/w,maxH/h);
+  return {w:Math.round(w*sc),h:Math.round(h*sc)};
+}
+
+// ── DOWNLOAD ──────────────────────────────────────────────────────────────────
+btnDl.addEventListener('click', () => {
+  if (!zipBlob) return;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(zipBlob);
+  a.download=`optimerede-billeder-${stamp()}.zip`;
+  a.click(); URL.revokeObjectURL(a.href);
+});
+
+// ── RYD ALT ───────────────────────────────────────────────────────────────────
+btnClear.addEventListener('click', () => {
+  files.forEach(f=>{ if(f.thumbUrl) URL.revokeObjectURL(f.thumbUrl); });
+  files=[]; zipBlob=null;
+  fileList.innerHTML=''; actions.style.display='none';
+  btnDl.style.display='none'; qPanel.classList.remove('on');
+  statusBar.classList.remove('on'); summary.classList.remove('on');
+  btnRun.disabled=true;
+});
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function fmtBytes(b) {
+  if (b>=1048576) return (b/1048576).toFixed(1)+' MB';
+  if (b>=1024) return Math.round(b/1024)+' KB';
+  return b+' B';
+}
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function stamp() { const d=new Date(); return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`; }
+</script>
+</body>
+</html>
