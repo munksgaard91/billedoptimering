@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="da">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Best One – Billedoptimering</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 141'%3E%3Cpath fill='%23225581' d='M94.6,53.8c-4.3-7-10.3-12.4-18-16.3C68.9,33.6,60.2,31.6,50.5,31.6c-6.8,0-13,1-18.8,2.9V0H0l0.1,74.9C0.1,75.8,0,76.7,0,77.7c0,8.9,2.2,16.9,6.5,23.9c4.3,7,10.4,12.5,18.1,16.5c7.7,4,16.3,5.9,25.9,5.9c9.7,0,18.4-2,26.1-5.9c7.7-4,13.7-9.5,18-16.5c4.3-7,6.4-15,6.4-23.9S98.9,60.8,94.6,53.8z M64.1,97.4c-3.5,3.8-8,5.7-13.5,5.7c-5.5,0-10-1.9-13.5-5.7c-3.5-3.8-5.3-9-5.3-15.8c0-6.6,1.8-11.8,5.3-15.5c3.5-3.7,8-5.6,13.5-5.6c5.5,0,10,1.9,13.5,5.6c3.5,3.7,5.3,8.9,5.3,15.5C69.4,88.4,67.6,93.6,64.1,97.4z'/%3E%3C/svg%3E" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 141'%3E%3Cpath fill='%23225581' d='M94.6,53.8c-4.3-7-10.3-12.4-18-16.3C68.9,33.6,60.2,31.6,50.5,31.6c-6.8,0-13,1-18.8,2.9V0H0l0.1,74.9C0.1,75.8,0,76.7,0,77.7c0,8.9,2.2,16.9,6.5,23.9c4.3,7,10.4,12.5,18.1,16.5c7.7,4,16.3,5.9,25.9,5.9c9.7,0,18.4-2,26.1-5.9c7.7-4,13.7-9.5,18-16.5c4.3-7,6.4-15,6.4-23.9S98.9,60.8,94.6,53.8z M64.1,97.4c-3.5,3.8-8,5.7-13.5,5.7c-5.5,0-10-1.9-13.5-5.7c-3.5-3.8-5.3-9-5.3-15.8c0-6.6,1.8-11.8,5.3-15.5c3.5-3.7,8-5.6,13.5-5.6c5.5,0,10,1.9,13.5,5.6c3.5,3.7,5.3,8.9,5.3,15.5C69.4,88.4,67.6,93.6,64.1,97.4z'/%3E%3C/svg%3E"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <style>
@@ -27,9 +27,9 @@
     .header-tag{font-size:11px;color:rgba(255,255,255,.6);font-weight:400;letter-spacing:.5px;text-transform:uppercase;}
 
     /* GLOBAL PROGRESS */
-    #gbar{position:fixed;top:0;left:0;right:0;height:3px;z-index:999;display:none;}
+    #gbar{position:fixed;top:0;left:0;right:0;height:3px;z-index:999;display:none;will-change:transform;}
     #gbar.on{display:block;}
-    #gfill{height:100%;background:linear-gradient(90deg,#225581,#4a8ec2);width:0%;transition:width .25s ease;}
+    #gfill{height:100%;background:linear-gradient(90deg,#225581,#4a8ec2);width:0%;transition:width .25s ease;will-change:width;}
 
     /* MAIN */
     main{flex:1;max-width:860px;width:100%;margin:0 auto;padding:40px 24px 60px;}
@@ -37,10 +37,9 @@
     .subtitle{font-size:14px;color:var(--muted);margin-bottom:24px;}
 
     /* QUALITY PANEL */
-    #qpanel{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:24px;}
+    #qpanel{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:24px;contain:layout;}
     .ph{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
     .pt{font-size:13px;font-weight:600;color:var(--text);}
-    .ps{font-size:12px;color:var(--muted);margin-top:1px;}
     .qbtns{display:flex;gap:6px;}
     .qbtn{font-family:var(--font);font-size:12px;font-weight:500;padding:8px 18px;border-radius:6px;border:1px solid var(--border);background:var(--white);color:var(--text);cursor:pointer;transition:background .1s,border-color .1s,color .1s;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.3;}
     .qbtn .ql{font-weight:600;}
@@ -49,42 +48,39 @@
     .qbtn.on{background:var(--blue);border-color:var(--blue);color:var(--white);}
     .qbtn.on .qs{color:rgba(255,255,255,.7);}
 
-    /* ESTIMATE / FILE LIST – kombineret */
+    /* FILE LIST */
     #est-panel{display:none;}
     #est-panel.on{display:block;}
-    .est-list{padding:4px 0;max-height:320px;overflow-y:auto;}
-    .est-row{display:flex;align-items:center;gap:10px;padding:8px 20px;border-bottom:1px solid var(--bg);font-size:12px;position:relative;}
+    .est-list{padding:4px 0;max-height:320px;overflow-y:auto;contain:content;}
+    .est-row{display:flex;align-items:center;gap:10px;padding:8px 20px;border-bottom:1px solid var(--bg);font-size:12px;position:relative;contain:layout;}
     .est-row:last-child{border-bottom:none;}
     .est-row:hover{background:var(--bg);}
-    .en{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);font-weight:500;}
-    .eo{color:var(--muted);min-width:54px;text-align:right;}
-    .ea{color:var(--border);}
-    .ef{min-width:54px;text-align:right;font-weight:600;}
-    .es{min-width:60px;text-align:right;font-size:11px;padding:2px 6px;border-radius:20px;}
-    .sh{background:var(--green-bg);color:var(--green);}
-    .sl{background:var(--bg);color:var(--muted);}
-    /* Status badge i rækken */
-    .row-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
-    .s-wait{background:var(--bg);color:var(--muted);}
-    .s-work{background:#fff8e6;color:#a06a00;animation:pulse 1.2s ease-in-out infinite;}
-    .s-done{background:var(--green-bg);color:var(--green);}
-    .s-err{background:var(--red-bg);color:var(--red);}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-    /* Slet-kryds på hover */
-    .row-del{opacity:0;flex-shrink:0;background:none;border:none;cursor:pointer;color:var(--muted);padding:2px 4px;border-radius:4px;display:flex;align-items:center;transition:opacity .15s,color .15s;}
+    /* Filnavn + skjult slet-knap */
+    .en{flex:1;display:flex;align-items:center;gap:6px;min-width:0;}
+    .en-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;cursor:pointer;color:var(--text);font-weight:500;}
+    .en-name:hover{color:var(--blue);}
+    .row-del{flex-shrink:0;background:none;border:none;cursor:pointer;color:var(--muted);padding:2px 3px;border-radius:4px;display:flex;align-items:center;opacity:0;transition:opacity .15s,color .15s;}
     .est-row:hover .row-del{opacity:1;}
     .row-del:hover{color:var(--red);}
     .row-del svg{width:13px;height:13px;}
-    /* Progress bar under filnavn */
+    .eo{color:var(--muted);min-width:54px;text-align:right;flex-shrink:0;}
+    .ea{color:var(--border);flex-shrink:0;}
+    .ef{min-width:54px;text-align:right;font-weight:600;flex-shrink:0;}
+    /* Status badge */
+    .row-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+    .s-wait{background:var(--bg);color:var(--muted);}
+    .s-work{background:#fff8e6;color:#a06a00;animation:pulse 1.2s ease-in-out infinite;will-change:opacity;}
+    .s-done{background:var(--green-bg);color:var(--green);}
+    .s-err{background:var(--red-bg);color:var(--red);}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    /* Progress bar */
     .row-pbar{position:absolute;bottom:0;left:20px;right:20px;height:2px;background:var(--border);border-radius:2px;overflow:hidden;display:none;}
     .row-pbar.on{display:block;}
-    .row-pfill{height:100%;background:var(--blue);border-radius:2px;width:0%;transition:width .25s ease;}
-
+    .row-pfill{height:100%;background:var(--blue);border-radius:2px;width:0%;transition:width .25s ease;will-change:width;}
     /* Totallinje */
-    .est-footer{padding:10px 20px;background:var(--bg);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+    .est-footer{padding:10px 20px;background:var(--bg);border-top:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
     .ptot{font-size:12px;color:var(--muted);}
     .ptot strong{color:var(--text);font-weight:600;}
-    .ptot-saving{font-size:12px;font-weight:600;color:var(--green);}
 
     /* DROP ZONE */
     .drop-zone{border:2px dashed var(--border);border-radius:var(--radius);background:var(--white);padding:48px 24px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s,opacity .15s;box-shadow:var(--shadow);position:relative;}
@@ -103,7 +99,7 @@
     .drop-zone.loading .drop-sub{opacity:.2;}
     .drop-loading{display:none;position:absolute;inset:0;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:rgba(255,255,255,.88);border-radius:var(--radius);}
     .drop-zone.loading .drop-loading{display:flex;}
-    .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;}
+    .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;will-change:transform;}
     @keyframes spin{to{transform:rotate(360deg);}}
     .loading-text{font-size:13px;font-weight:500;color:var(--blue);}
 
@@ -116,24 +112,21 @@
     #actions{display:none;margin-top:16px;flex-direction:column;gap:10px;}
     #actions.on{display:flex;}
 
-    /* STOR DOWNLOAD-KNAP */
-    .btn-dl-big{font-family:var(--font);font-size:16px;font-weight:700;background:var(--green);color:var(--white);border:none;border-radius:10px;padding:16px 24px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;box-shadow:0 4px 16px rgba(42,125,79,.3);transition:background .15s,box-shadow .15s,transform .1s;}
-    .btn-dl-big:hover{background:#236b42;box-shadow:0 6px 20px rgba(42,125,79,.4);}
-    .btn-dl-big:active{transform:scale(.99);}
-    .btn-dl-big svg{width:22px;height:22px;}
-
-    /* OPTIMER-KNAP – fuld bredde */
-    .btn-run{font-family:var(--font);font-size:15px;font-weight:600;background:var(--blue);color:var(--white);border:none;border-radius:10px;padding:14px 24px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;width:100%;transition:background .15s,transform .1s,opacity .15s;}
+    /* PRIMÆRE KNAPPER */
+    .btn-run{font-family:var(--font);font-size:15px;font-weight:600;background:var(--blue);color:var(--white);border:none;border-radius:10px;padding:14px 24px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;width:100%;transition:background .15s,opacity .15s;}
     .btn-run:hover{background:var(--blue-dark);}
-    .btn-run:active{transform:scale(.99);}
     .btn-run:disabled{opacity:.4;cursor:not-allowed;}
     .btn-run svg{width:18px;height:18px;}
+    .btn-dl-big{font-family:var(--font);font-size:16px;font-weight:700;background:var(--green);color:var(--white);border:none;border-radius:10px;padding:16px 24px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;box-shadow:0 4px 16px rgba(42,125,79,.3);transition:background .15s,box-shadow .15s;}
+    .btn-dl-big:hover{background:#236b42;box-shadow:0 6px 20px rgba(42,125,79,.4);}
+    .btn-dl-big svg{width:22px;height:22px;}
 
-    /* SEKUNDÆRE KNAPPER – lille række */
+    /* SEKUNDÆRE KNAPPER */
     .actions-secondary{display:flex;gap:10px;flex-wrap:wrap;}
-    .btn-sm{font-family:var(--font);font-size:12px;font-weight:500;background:var(--white);color:var(--muted);border:1px solid var(--border);border-radius:7px;padding:7px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s,color .15s;}
+    .btn-sm{font-family:var(--font);font-size:12px;font-weight:500;background:var(--white);color:var(--muted);border:1px solid var(--border);border-radius:7px;padding:7px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s,color .15s,border-color .15s;}
     .btn-sm:hover{background:var(--bg);color:var(--text);}
-    .btn-sm.danger:hover{background:var(--red-bg);color:var(--red);border-color:var(--red);}
+    .btn-sm.danger{color:var(--red);border-color:#e8b4b4;}
+    .btn-sm.danger:hover{background:var(--red-bg);border-color:var(--red);}
     .btn-sm svg{width:13px;height:13px;}
 
     /* SUMMARY */
@@ -142,7 +135,7 @@
     #summary svg{width:18px;height:18px;flex-shrink:0;}
 
     /* PREVIEW MODAL */
-    #modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center;padding:24px;}
+    #modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center;padding:24px;transform:translateZ(0);}
     #modal.on{display:flex;}
     .mbox{background:var(--white);border-radius:12px;overflow:hidden;max-width:1100px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.3);}
     .mhead{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;}
@@ -184,33 +177,25 @@
   <h1>Billedoptimering</h1>
   <p class="subtitle">Upload dine billeder – værktøjet resizer, komprimerer og pakker dem klar til brug på hjemmesider.</p>
 
-  <!-- KVALITETSPANEL + FILLISTE -->
   <div id="qpanel">
     <div class="ph">
-      <div>
-        <div class="pt">Vælg kvalitetsniveau</div>
-        <div class="ps">Gælder alle billeder i denne kørsel</div>
-      </div>
+      <div class="pt">Vælg kvalitetsniveau</div>
       <div class="qbtns">
         <button class="qbtn" data-q="70"><span class="ql">God</span><span class="qs">maks. 250 KB</span></button>
-        <button class="qbtn on" data-q="82"><span class="ql">Høj</span><span class="qs">maks. 350 KB</span></button>
-        <button class="qbtn" data-q="92"><span class="ql">Maksimal</span><span class="qs">maks. 500 KB</span></button>
+        <button class="qbtn" data-q="82"><span class="ql">Høj</span><span class="qs">maks. 350 KB</span></button>
+        <button class="qbtn on" data-q="92"><span class="ql">Maksimal</span><span class="qs">maks. 500 KB</span></button>
       </div>
     </div>
     <div id="est-panel">
       <div class="est-list" id="est-list"></div>
-      <div class="est-footer">
-        <div class="ptot" id="ptot"></div>
-        <div class="ptot-saving" id="ptot-saving"></div>
-      </div>
+      <div class="est-footer"><div class="ptot" id="ptot"></div></div>
     </div>
   </div>
 
-  <!-- DROP ZONE -->
   <div class="drop-zone" id="drop-zone">
     <input type="file" id="file-input"
       accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/tiff,image/avif,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tif,.tiff,.avif,.heic,.heif"
-      multiple />
+      multiple/>
     <div class="drop-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -222,19 +207,15 @@
     <div class="drop-loading"><div class="spinner"></div><div class="loading-text">Analyserer billeder…</div></div>
   </div>
 
-  <!-- HANDLINGER -->
   <div id="actions">
-    <!-- Optimer (vises før kørsel) -->
     <button class="btn-run" id="btn-run" disabled>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
-      Optimer alle billeder
+      Optimer og download filer
     </button>
-    <!-- Download (vises efter kørsel) -->
     <button class="btn-dl-big" id="btn-dl" style="display:none">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Download filer
     </button>
-    <!-- Sekundære -->
     <div class="actions-secondary">
       <button class="btn-sm" id="btn-add">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -255,7 +236,6 @@
 
 <footer>Best One A/S &nbsp;·&nbsp; Internt supportværktøj &nbsp;·&nbsp; Alle billeder behandles lokalt i din browser</footer>
 
-<!-- PREVIEW MODAL -->
 <div id="modal">
   <div class="mbox">
     <div class="mhead">
@@ -284,16 +264,15 @@
 
 <script>
 'use strict';
-
 const MAX_LONG=1920,MAX_SHORT=1280,MIN_Q=0.50;
 const MAX_KB_MAP={70:250,82:350,92:500};
 const START_Q={70:0.82,82:0.90,92:0.96};
-let curMaxKb=350,curStartQ=0.90;
+let curMaxKb=500,curStartQ=0.96;
 let files=[],zipBlob=null;
 
 const $=id=>document.getElementById(id);
 const dropZone=$('drop-zone'),fileInput=$('file-input'),fileInputX=$('file-input-extra');
-const estPanel=$('est-panel'),estList=$('est-list'),ptot=$('ptot'),ptotSaving=$('ptot-saving');
+const estPanel=$('est-panel'),estList=$('est-list'),ptot=$('ptot');
 const actions=$('actions'),btnRun=$('btn-run'),btnAdd=$('btn-add');
 const btnDl=$('btn-dl'),btnClear=$('btn-clear');
 const summary=$('summary'),sumText=$('sum-text');
@@ -338,8 +317,12 @@ document.querySelectorAll('.qbtn').forEach(btn=>{
     btn.classList.add('on');
     const qk=parseInt(btn.dataset.q);
     curMaxKb=MAX_KB_MAP[qk];curStartQ=START_Q[qk];
+    // Nulstil færdige billeder så ny kvalitet kan køres
     files.forEach(f=>{if(f.status==='done'){f.status='wait';f.blob=null;f.finalKB=null;}});
-    if(files.length){renderList();renderEstimates();}
+    if(files.length){
+      btnRun.style.display='';btnDl.style.display='none';
+      renderEstimates();
+    }
   });
 });
 
@@ -380,9 +363,7 @@ function setGP(pct){
   else{gbar.classList.add('on');gfill.style.width=pct+'%';}
 }
 
-// RENDER LISTE (estimate + status kombineret)
-function renderList(){renderEstimates();}
-
+// RENDER LISTE
 function renderEstimates(){
   estList.innerHTML='';
   let totEst=0,totOrig=0;
@@ -390,52 +371,42 @@ function renderEstimates(){
     const isActual=f.status==='done'&&f.finalKB;
     const kb=isActual?f.finalKB:Math.round(curMaxKb*0.80);
     totEst+=kb;totOrig+=f.origSize;
-
     const origDisp=f.origSize>=1048576?(f.origSize/1048576).toFixed(1)+' MB':Math.round(f.origSize/1024)+' KB';
-    const sv=Math.round((1-(kb*1024)/f.origSize)*100);
-    const sc=sv>=70?'sh':'sl';
     const fc=isActual?'var(--green)':'var(--text)';
-
     const statusCls={wait:'s-wait',work:'s-work',done:'s-done',err:'s-err'}[f.status];
     const statusLbl={wait:'Klar',work:'Behandler…',done:'Færdig',err:'Fejl'}[f.status];
 
     const row=document.createElement('div');
     row.className='est-row';row.id=`row${i}`;
     row.innerHTML=`
-      <span class="en" title="${esc(f.file.name)}" style="cursor:pointer">${esc(f.file.name)}</span>
+      <span class="en">
+        <span class="en-name" title="${esc(f.file.name)}">${esc(f.file.name)}</span>
+        <button class="row-del" title="Fjern">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </span>
       <span class="eo">${origDisp}</span>
       <span class="ea">→</span>
       <span class="ef" style="color:${fc}" id="ef${i}">${isActual?kb+' KB':'~'+kb+' KB'}</span>
-      <span class="es ${sc}" id="es${i}">${sv>0?'-'+sv+'%':'0%'}${isActual?' ✓':''}</span>
       <span class="row-badge ${statusCls}" id="rb${i}">${statusLbl}</span>
-      <button class="row-del" data-i="${i}" title="Fjern">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
       <div class="row-pbar" id="pb${i}"><div class="row-pfill" id="pf${i}"></div></div>`;
     estList.appendChild(row);
-
-    // Klik på filnavn åbner preview
-    row.querySelector('.en').addEventListener('click',()=>openModal(i));
+    row.querySelector('.en-name').addEventListener('click',()=>openModal(i));
     row.querySelector('.row-del').addEventListener('click',()=>removeFile(i));
   });
 
-  // Total
   const origKB=Math.round(totOrig/1024);
   const origDisp=totOrig>=1048576?(totOrig/1048576).toFixed(1)+' MB':origKB+' KB';
-  const sv=Math.round((1-totEst/origKB)*100);
   ptot.innerHTML=`<strong>${files.length} billede${files.length>1?'r':''}</strong> &nbsp;·&nbsp; ${origDisp} → <strong style="color:var(--green)">${totEst>1024?(totEst/1024).toFixed(1)+' MB':totEst+' KB'}</strong>`;
-  ptotSaving.textContent=sv>0?`ca. −${sv}%`:'';
 }
 
 function removeFile(i){
   if(files[i].thumbUrl)URL.revokeObjectURL(files[i].thumbUrl);
   files.splice(i,1);
   if(!files.length){
-    estPanel.classList.remove('on');
-    actions.classList.remove('on');
-    summary.classList.remove('on');
-    btnDl.style.display='none';
-    dropZone.style.display='';
+    estPanel.classList.remove('on');actions.classList.remove('on');
+    summary.classList.remove('on');btnDl.style.display='none';
+    btnRun.style.display='';dropZone.style.display='';
     return;
   }
   renderEstimates();
@@ -443,21 +414,17 @@ function removeFile(i){
 
 function updateRow(i){
   const f=files[i];
-  const rb=$(`rb${i}`),ef=$(`ef${i}`),es=$(`es${i}`);
-  const statusCls={wait:'s-wait',work:'s-work',done:'s-done',err:'s-err'}[f.status];
-  const statusLbl={wait:'Klar',work:'Behandler…',done:'Færdig',err:'Fejl'}[f.status];
-  if(rb){rb.className=`row-badge ${statusCls}`;rb.textContent=statusLbl;}
-  if(ef&&f.finalKB){
-    ef.textContent=f.finalKB+' KB';ef.style.color='var(--green)';
-    const sv=Math.round((1-(f.finalKB*1024)/f.origSize)*100);
-    if(es){es.textContent=`-${sv}% ✓`;es.className='es sh';}
-  }
+  const rb=$(`rb${i}`),ef=$(`ef${i}`);
+  const sc={wait:'s-wait',work:'s-work',done:'s-done',err:'s-err'}[f.status];
+  const sl={wait:'Klar',work:'Behandler…',done:'Færdig',err:'Fejl'}[f.status];
+  if(rb){rb.className=`row-badge ${sc}`;rb.textContent=sl;}
+  if(ef&&f.finalKB){ef.textContent=f.finalKB+' KB';ef.style.color='var(--green)';}
 }
 
 function setProg(i,pct){
   const pb=$(`pb${i}`),pf=$(`pf${i}`);
   if(!pb)return;
-  if(pct>0&&pct<100){pb.classList.add('on');}else{pb.classList.remove('on');}
+  pb.classList.toggle('on',pct>0&&pct<100);
   if(pf)pf.style.width=pct+'%';
 }
 
@@ -489,7 +456,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 
 // OPTIMER
 btnRun.addEventListener('click',async()=>{
-  btnRun.disabled=true;btnDl.style.display='none';
+  btnRun.disabled=true;
   summary.classList.remove('on');zipBlob=null;
   const toRun=files.filter(f=>f.status!=='done');
   let done=0;setGP(2);
@@ -510,10 +477,9 @@ btnRun.addEventListener('click',async()=>{
   if(finished.length){
     const zip=new JSZip();
     finished.forEach(f=>zip.file(f.outputName+'.jpg',f.blob));
-    zipBlob=await zip.generateAsync({type:'blob'});
+    zipBlob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:1}});
     setGP(100);setTimeout(()=>setGP(null),600);
-    btnRun.style.display='none';
-    btnDl.style.display='flex';
+    btnRun.style.display='none';btnDl.style.display='flex';
     const tO=finished.reduce((s,f)=>s+f.origSize,0);
     const tF=finished.reduce((s,f)=>s+f.blob.size,0);
     const sv=Math.round((1-tF/tO)*100);
@@ -539,7 +505,7 @@ async function processImage(file,startQ,maxKb,idx){
       setProg(idx,50);
       const cv=document.createElement('canvas');
       cv.width=w;cv.height=h;
-      cv.getContext('2d').drawImage(img,0,0,w,h);
+      cv.getContext('2d',{alpha:false}).drawImage(img,0,0,w,h);
       setProg(idx,70);
       compressLoop(cv,startQ,maxKb,resolve,reject,idx);
     };
@@ -580,8 +546,7 @@ btnClear.addEventListener('click',()=>{
   files=[];zipBlob=null;
   estPanel.classList.remove('on');actions.classList.remove('on');
   btnDl.style.display='none';btnRun.style.display='';btnRun.disabled=true;
-  summary.classList.remove('on');
-  dropZone.style.display='';
+  summary.classList.remove('on');dropZone.style.display='';
 });
 
 function fmtBytes(b){
