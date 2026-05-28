@@ -48,7 +48,12 @@
     .qbtn.on{background:var(--blue);border-color:var(--blue);color:var(--white);}
     .qbtn.on .qs{color:rgba(255,255,255,.7);}
 
-    /* FILE LIST */
+    .ph-mode{border-top:1px solid var(--border);padding:10px 20px;}
+    .pt-sm{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+    .mode-btns{display:flex;gap:6px;}
+    .mode-btn{font-family:var(--font);font-size:12px;font-weight:500;padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--white);color:var(--text);cursor:pointer;transition:background .1s,border-color .1s,color .1s;}
+    .mode-btn:hover{border-color:var(--blue);color:var(--blue);}
+    .mode-btn.on{background:var(--blue);border-color:var(--blue);color:var(--white);}
     #est-panel{display:none;}
     #est-panel.on{display:block;}
     .est-list{padding:4px 0;max-height:320px;overflow-y:auto;contain:content;}
@@ -186,6 +191,13 @@
         <button class="qbtn on" data-q="92"><span class="ql">Maksimal</span><span class="qs">maks. 500 KB</span></button>
       </div>
     </div>
+    <div class="ph ph-mode">
+      <div class="pt-sm">Størrelse</div>
+      <div class="mode-btns">
+        <button class="mode-btn on" data-mode="fit">Bevar proportioner</button>
+        <button class="mode-btn" data-mode="crop">Crop til 1920×1280</button>
+      </div>
+    </div>
     <div id="est-panel">
       <div class="est-list" id="est-list"></div>
       <div class="est-footer"><div class="ptot" id="ptot"></div></div>
@@ -267,7 +279,7 @@
 const MAX_LONG=1920,MAX_SHORT=1280,MIN_Q=0.50;
 const MAX_KB_MAP={70:250,82:350,92:500};
 const START_Q={70:0.82,82:0.90,92:0.96};
-let curMaxKb=500,curStartQ=0.96;
+let curMaxKb=500,curStartQ=0.96,cropMode=false;
 let files=[],zipBlob=null;
 
 const $=id=>document.getElementById(id);
@@ -309,6 +321,15 @@ btnAdd.addEventListener('click',()=>fileInputX.click());
 function validImage(f){
   return f.type.startsWith('image/')||/\.(jpe?g|png|webp|gif|bmp|tiff?|avif|heic|heif)$/i.test(f.name);
 }
+
+// STØRRELSESTILSTAND
+document.querySelectorAll('.mode-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    cropMode=btn.dataset.mode==='crop';
+  });
+});
 
 // KVALITETSKNAPPER
 document.querySelectorAll('.qbtn').forEach(btn=>{
@@ -501,11 +522,20 @@ async function processImage(file,startQ,maxKb,idx){
     const img=new Image(),url=URL.createObjectURL(src);
     img.onload=()=>{
       URL.revokeObjectURL(url);setProg(idx,30);
-      const{w,h}=calcDims(img.naturalWidth,img.naturalHeight);
+      const dims=calcDims(img.naturalWidth,img.naturalHeight);
       setProg(idx,50);
       const cv=document.createElement('canvas');
-      cv.width=w;cv.height=h;
-      cv.getContext('2d',{alpha:false}).drawImage(img,0,0,w,h);
+      cv.width=dims.w;cv.height=dims.h;
+      const ctx=cv.getContext('2d',{alpha:false});
+      if(dims.crop){
+        // Crop: skaler så billedet fylder hele canvas, centrer og beskær
+        const sc=Math.max(dims.w/dims.srcW,dims.h/dims.srcH);
+        const sw=Math.round(dims.srcW*sc),sh=Math.round(dims.srcH*sc);
+        const ox=Math.round((dims.w-sw)/2),oy=Math.round((dims.h-sh)/2);
+        ctx.drawImage(img,ox,oy,sw,sh);
+      }else{
+        ctx.drawImage(img,0,0,dims.w,dims.h);
+      }
       setProg(idx,70);
       compressLoop(cv,startQ,maxKb,resolve,reject,idx);
     };
@@ -527,10 +557,18 @@ function compressLoop(canvas,startQ,maxKb,resolve,reject,idx){
 }
 
 function calcDims(w,h){
-  const lsc=w>=h,maxW=lsc?MAX_LONG:MAX_SHORT,maxH=lsc?MAX_SHORT:MAX_LONG;
-  if(w<=maxW&&h<=maxH)return{w,h};
-  const sc=Math.min(maxW/w,maxH/h);
-  return{w:Math.round(w*sc),h:Math.round(h*sc)};
+  const lsc=w>=h,maxW=lsc?MAX_LONG:MAX_SHORT,maxH=lsc?MAX_LONG:MAX_SHORT;
+  // Korriger: portrait bruger 1280×1920
+  const tW=lsc?MAX_LONG:MAX_SHORT, tH=lsc?MAX_SHORT:MAX_LONG;
+  if(cropMode){
+    // Crop: skaler så billedet dækker hele målet, beskær derefter
+    return{w:tW,h:tH,crop:true,srcW:w,srcH:h};
+  }else{
+    // Fit: bevar proportioner, aldrig upscale
+    if(w<=tW&&h<=tH)return{w,h};
+    const sc=Math.min(tW/w,tH/h);
+    return{w:Math.round(w*sc),h:Math.round(h*sc)};
+  }
 }
 
 btnDl.addEventListener('click',()=>{
