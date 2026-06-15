@@ -557,17 +557,11 @@ function compressLoop(canvas,startQ,maxKb,resolve,reject,idx){
 }
 
 function calcDims(w,h){
-  const lsc=w>=h,maxW=lsc?MAX_LONG:MAX_SHORT,maxH=lsc?MAX_LONG:MAX_SHORT;
-  // Korriger: portrait bruger 1280×1920
-  const tW=lsc?MAX_LONG:MAX_SHORT, tH=lsc?MAX_SHORT:MAX_LONG;
+  const lsc=w>=h,tW=lsc?MAX_LONG:MAX_SHORT,tH=lsc?MAX_SHORT:MAX_LONG;
   if(cropMode){
-    // Crop: skaler så billedet dækker hele målet, beskær derefter
     return{w:tW,h:tH,crop:true,srcW:w,srcH:h};
   }else{
-    // Fit: bevar proportioner, aldrig upscale
-    if(w<=tW&&h<=tH)return{w,h};
-    const sc=Math.min(tW/w,tH/h);
-    return{w:Math.round(w*sc),h:Math.round(h*sc)};
+    return{w,h};
   }
 }
 
