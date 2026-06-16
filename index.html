@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Best One – Billedoptimering</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 141'%3E%3Cpath fill='%23225581' d='M94.6,53.8c-4.3-7-10.3-12.4-18-16.3C68.9,33.6,60.2,31.6,50.5,31.6c-6.8,0-13,1-18.8,2.9V0H0l0.1,74.9C0.1,75.8,0,76.7,0,77.7c0,8.9,2.2,16.9,6.5,23.9c4.3,7,10.4,12.5,18.1,16.5c7.7,4,16.3,5.9,25.9,5.9c9.7,0,18.4-2,26.1-5.9c7.7-4,13.7-9.5,18-16.5c4.3-7,6.4-15,6.4-23.9S98.9,60.8,94.6,53.8z M64.1,97.4c-3.5,3.8-8,5.7-13.5,5.7c-5.5,0-10-1.9-13.5-5.7c-3.5-3.8-5.3-9-5.3-15.8c0-6.6,1.8-11.8,5.3-15.5c3.5-3.7,8-5.6,13.5-5.6c5.5,0,10,1.9,13.5,5.6c3.5,3.7,5.3,8.9,5.3,15.5C69.4,88.4,67.6,93.6,64.1,97.4z'/%3E%3C/svg%3E"/>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect width='24' height='24' rx='5' fill='%23225581'/%3E%3Crect x='3' y='6' width='18' height='13' rx='2' stroke='white' stroke-width='1.5' fill='none'/%3E%3Ccircle cx='12' cy='12.5' r='3' stroke='white' stroke-width='1.5' fill='none'/%3E%3Cpath d='M9 6l1.5-2h3L15 6' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -98,15 +98,6 @@
     .drop-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:5px;}
     .drop-sub{font-size:13px;color:var(--muted);}
     .drop-sub strong{color:var(--blue);font-weight:500;}
-    .drop-zone.loading{pointer-events:none;}
-    .drop-zone.loading .drop-icon,
-    .drop-zone.loading .drop-title,
-    .drop-zone.loading .drop-sub{opacity:.2;}
-    .drop-loading{display:none;position:absolute;inset:0;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:rgba(255,255,255,.88);border-radius:var(--radius);}
-    .drop-zone.loading .drop-loading{display:flex;}
-    .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;will-change:transform;}
-    @keyframes spin{to{transform:rotate(360deg);}}
-    .loading-text{font-size:13px;font-weight:500;color:var(--blue);}
 
     /* GLOBAL DRAG OVERLAY */
     #drag-overlay{display:none;position:fixed;inset:0;background:rgba(34,85,129,.08);border:3px dashed var(--blue);z-index:500;pointer-events:none;align-items:center;justify-content:center;}
@@ -216,7 +207,6 @@
     </div>
     <div class="drop-title">Træk billeder hertil eller klik for at vælge</div>
     <div class="drop-sub">Understøtter <strong>JPG, PNG, HEIC, WEBP</strong> og de fleste andre billedformater</div>
-    <div class="drop-loading"><div class="spinner"></div><div class="loading-text">Analyserer billeder…</div></div>
   </div>
 
   <div id="actions">
@@ -351,42 +341,52 @@ document.querySelectorAll('.qbtn').forEach(btn=>{
 function addFiles(incoming){
   const fresh=incoming.filter(f=>validImage(f)&&!files.find(x=>x.file.name===f.name&&x.origSize===f.size));
   if(!fresh.length)return;
-  setDropLoading(true);
   fresh.forEach(f=>{
     files.push({file:f,outputName:f.name.replace(/\.[^.]+$/,''),origSize:f.size,
-                blob:null,finalKB:null,status:'wait',dims:null,thumbUrl:URL.createObjectURL(f)});
+                blob:null,finalKB:null,status:'wait',thumbUrl:URL.createObjectURL(f)});
   });
   dropZone.style.display='none';
   actions.classList.add('on');
   btnRun.disabled=false;btnDl.style.display='none';
   summary.classList.remove('on');zipBlob=null;
-  loadDims();
-}
-
-// DIMS
-function loadDims(){
-  estList.innerHTML='<div style="padding:10px 20px;font-size:12px;color:var(--muted)">Analyserer billeder…</div>';
   estPanel.classList.add('on');
-  let pending=files.filter(f=>!f.dims).length;
-  if(!pending){setDropLoading(false);renderEstimates();return;}
-  files.forEach((f,i)=>{
-    if(f.dims)return;
-    const img=new Image();
-    img.onload=()=>{files[i].dims=calcDims(img.naturalWidth,img.naturalHeight);if(!--pending){setDropLoading(false);renderEstimates();}};
-    img.onerror=()=>{files[i].dims={w:MAX_LONG,h:MAX_SHORT};if(!--pending){setDropLoading(false);renderEstimates();}};
-    img.src=f.thumbUrl;
-  });
+  renderEstimates();
 }
 
-function setDropLoading(on){dropZone.classList.toggle('loading',on);}
 function setGP(pct){
   if(pct===null){gbar.classList.remove('on');gfill.style.width='0%';}
   else{gbar.classList.add('on');gfill.style.width=pct+'%';}
 }
 
-// RENDER LISTE
+// RENDER LISTE – bygger kun DOM når antal ændres, opdaterer ellers in-place
+let _renderedCount = 0;
 function renderEstimates(){
-  estList.innerHTML='';
+  const needRebuild = files.length !== _renderedCount;
+  if(needRebuild){
+    _renderedCount = files.length;
+    estList.innerHTML='';
+    files.forEach((f,i)=>{
+      const row=document.createElement('div');
+      row.className='est-row';row.id=`row${i}`;
+      row.dataset.idx=i;
+      row.innerHTML=`
+        <span class="en">
+          <span class="en-name" title="${esc(f.file.name)}">${esc(f.file.name)}</span>
+          <button class="row-del" title="Fjern">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </span>
+        <span class="eo" id="eo${i}"></span>
+        <span class="ea">→</span>
+        <span class="ef" id="ef${i}"></span>
+        <span class="row-badge" id="rb${i}"></span>
+        <div class="row-pbar" id="pb${i}"><div class="row-pfill" id="pf${i}"></div></div>`;
+      estList.appendChild(row);
+      row.querySelector('.en-name').addEventListener('click',e=>openModal(+e.target.closest('.est-row').dataset.idx));
+      row.querySelector('.row-del').addEventListener('click',e=>removeFile(+e.target.closest('.est-row').dataset.idx));
+    });
+  }
+
   let totEst=0,totOrig=0;
   files.forEach((f,i)=>{
     const isActual=f.status==='done'&&f.finalKB;
@@ -394,26 +394,12 @@ function renderEstimates(){
     totEst+=kb;totOrig+=f.origSize;
     const origDisp=f.origSize>=1048576?(f.origSize/1048576).toFixed(1)+' MB':Math.round(f.origSize/1024)+' KB';
     const fc=isActual?'var(--green)':'var(--text)';
-    const statusCls={wait:'s-wait',work:'s-work',done:'s-done',err:'s-err'}[f.status];
-    const statusLbl={wait:'Klar',work:'Behandler…',done:'Færdig',err:'Fejl'}[f.status];
-
-    const row=document.createElement('div');
-    row.className='est-row';row.id=`row${i}`;
-    row.innerHTML=`
-      <span class="en">
-        <span class="en-name" title="${esc(f.file.name)}">${esc(f.file.name)}</span>
-        <button class="row-del" title="Fjern">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </span>
-      <span class="eo">${origDisp}</span>
-      <span class="ea">→</span>
-      <span class="ef" style="color:${fc}" id="ef${i}">${isActual?kb+' KB':'~'+kb+' KB'}</span>
-      <span class="row-badge ${statusCls}" id="rb${i}">${statusLbl}</span>
-      <div class="row-pbar" id="pb${i}"><div class="row-pfill" id="pf${i}"></div></div>`;
-    estList.appendChild(row);
-    row.querySelector('.en-name').addEventListener('click',()=>openModal(i));
-    row.querySelector('.row-del').addEventListener('click',()=>removeFile(i));
+    const sc={wait:'s-wait',work:'s-work',done:'s-done',err:'s-err'}[f.status];
+    const sl={wait:'Klar',work:'Behandler…',done:'Færdig',err:'Fejl'}[f.status];
+    const eo=$(`eo${i}`),ef=$(`ef${i}`),rb=$(`rb${i}`);
+    if(eo)eo.textContent=origDisp;
+    if(ef){ef.textContent=isActual?kb+' KB':'~'+kb+' KB';ef.style.color=fc;}
+    if(rb){rb.className=`row-badge ${sc}`;rb.textContent=sl;}
   });
 
   const origKB=Math.round(totOrig/1024);
@@ -424,6 +410,7 @@ function renderEstimates(){
 function removeFile(i){
   if(files[i].thumbUrl)URL.revokeObjectURL(files[i].thumbUrl);
   files.splice(i,1);
+  _renderedCount=0;
   if(!files.length){
     estPanel.classList.remove('on');actions.classList.remove('on');
     summary.classList.remove('on');btnDl.style.display='none';
@@ -575,7 +562,7 @@ btnDl.addEventListener('click',()=>{
 
 btnClear.addEventListener('click',()=>{
   files.forEach(f=>{if(f.thumbUrl)URL.revokeObjectURL(f.thumbUrl);});
-  files=[];zipBlob=null;
+  files=[];zipBlob=null;_renderedCount=0;
   estPanel.classList.remove('on');actions.classList.remove('on');
   btnDl.style.display='none';btnRun.style.display='';btnRun.disabled=true;
   summary.classList.remove('on');dropZone.style.display='';
