@@ -148,6 +148,17 @@
     .mimg-wrap img{max-width:100%;max-height:60vh;object-fit:contain;border-radius:4px;}
     .mwait{font-size:12px;color:var(--muted);text-align:center;line-height:1.6;}
 
+    /* TOAST FEJLBESKED */
+    #toast{position:fixed;bottom:24px;right:24px;background:#1a2733;color:#fff;border-radius:10px;padding:14px 18px;font-size:12px;max-width:320px;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:2000;display:none;flex-direction:column;gap:6px;animation:toastIn .2s ease;}
+    #toast.on{display:flex;}
+    @keyframes toastIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+    .toast-title{font-weight:700;font-size:13px;display:flex;align-items:center;gap:7px;color:#ff8a8a;}
+    .toast-title svg{width:15px;height:15px;flex-shrink:0;}
+    .toast-msg{color:rgba(255,255,255,.8);line-height:1.4;}
+    .toast-code{font-family:monospace;font-size:11px;background:rgba(255,255,255,.1);padding:4px 8px;border-radius:5px;color:rgba(255,255,255,.6);letter-spacing:.3px;}
+    .toast-close{align-self:flex-end;background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:11px;padding:0;margin-top:2px;}
+    .toast-close:hover{color:#fff;}
+
     footer{text-align:center;padding:18px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);}
   </style>
 </head>
@@ -155,6 +166,15 @@
 
 <div id="drag-overlay"><div class="drag-label">Slip billederne her</div></div>
 <div id="gbar"><div id="gfill"></div></div>
+<div id="toast">
+  <div class="toast-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    Noget gik galt
+  </div>
+  <div class="toast-msg" id="toast-msg"></div>
+  <div class="toast-code" id="toast-code"></div>
+  <button class="toast-close" id="toast-close">Luk ×</button>
+</div>
 
 <header>
   <svg viewBox="0 0 727 141" style="height:26px;width:auto" xmlns="http://www.w3.org/2000/svg">
@@ -353,6 +373,18 @@ function addFiles(incoming){
   renderEstimates();
 }
 
+// TOAST FEJLBESKED
+const toast=$('toast'),toastMsg=$('toast-msg'),toastCode=$('toast-code');
+$('toast-close').addEventListener('click',()=>toast.classList.remove('on'));
+let toastTimer=null;
+function showError(code,msg){
+  toastMsg.textContent=msg;
+  toastCode.textContent='Fejlkode: '+code;
+  toast.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>toast.classList.remove('on'),12000);
+}
+
 function setGP(pct){
   if(pct===null){gbar.classList.remove('on');gfill.style.width='0%';}
   else{gbar.classList.add('on');gfill.style.width=pct+'%';}
@@ -476,18 +508,34 @@ btnRun.addEventListener('click',async()=>{
       files[i].blob=blob;files[i].finalKB=Math.round(blob.size/1024);
       files[i].status='done';setProg(i,100);updateRow(i);
     }catch(err){
-      console.error(err);files[i].status='err';updateRow(i);setProg(i,0);
+      console.error(err);
+      files[i].status='err';files[i].errCode=err.code||'005';
+      updateRow(i);setProg(i,0);
     }
     setGP(Math.round((++done/toRun.length)*90));
   }
   setGP(95);renderEstimates();
+
+  // Vis fejl hvis nogen billeder fejlede
+  const failed=files.filter(f=>f.status==='err');
+  if(failed.length){
+    const codes=[...new Set(failed.map(f=>f.errCode||'005'))].join(', ');
+    showError(codes,`${failed.length} billede${failed.length>1?'r':''} kunne ikke komprimeres. Prøv at uploade dem igen.`);
+  }
+
   const finished=files.filter(f=>f.status==='done');
   if(finished.length){
-    const useZip=finished.length>3;
+    const useZip=finished.length>1;
     if(useZip){
-      const zip=new JSZip();
-      finished.forEach(f=>zip.file(f.outputName+'.jpg',f.blob));
-      zipBlob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:1}});
+      try{
+        const zip=new JSZip();
+        finished.forEach(f=>zip.file(f.outputName+'.jpg',f.blob));
+        zipBlob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:1}});
+      }catch(err){
+        console.error(err);
+        showError('004','Noget gik galt. Prøv at genindlæse siden og kør igen.');
+        btnRun.disabled=false;setGP(null);return;
+      }
     } else {
       zipBlob=null;
     }
@@ -508,8 +556,12 @@ async function processImage(file,startQ,maxKb,idx){
   let src=file;
   if(/\.(heic|heif)$/i.test(file.name)||file.type==='image/heic'||file.type==='image/heif'){
     setProg(idx,10);
-    const out=await heic2any({blob:file,toType:'image/png',quality:1});
-    src=Array.isArray(out)?out[0]:out;
+    try{
+      const out=await heic2any({blob:file,toType:'image/png',quality:1});
+      src=Array.isArray(out)?out[0]:out;
+    }catch(err){
+      throw Object.assign(new Error('HEIC-konvertering fejlede'),{code:'001'});
+    }
   }
   return new Promise((resolve,reject)=>{
     const img=new Image(),url=URL.createObjectURL(src);
@@ -521,7 +573,6 @@ async function processImage(file,startQ,maxKb,idx){
       cv.width=dims.w;cv.height=dims.h;
       const ctx=cv.getContext('2d',{alpha:false});
       if(dims.crop){
-        // Crop: skaler så billedet fylder hele canvas, centrer og beskær
         const sc=Math.max(dims.w/dims.srcW,dims.h/dims.srcH);
         const sw=Math.round(dims.srcW*sc),sh=Math.round(dims.srcH*sc);
         const ox=Math.round((dims.w-sw)/2),oy=Math.round((dims.h-sh)/2);
@@ -532,7 +583,7 @@ async function processImage(file,startQ,maxKb,idx){
       setProg(idx,70);
       compressLoop(cv,startQ,maxKb,resolve,reject,idx);
     };
-    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Kunne ikke indlæse billedet'));};
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(Object.assign(new Error('Billede kunne ikke indlæses'),{code:'002'}));};
     img.src=url;
   });
 }
@@ -541,7 +592,7 @@ function compressLoop(canvas,startQ,maxKb,resolve,reject,idx){
   let q=startQ;
   function next(){
     canvas.toBlob(blob=>{
-      if(!blob){reject(new Error('Canvas fejlede'));return;}
+      if(!blob){reject(Object.assign(new Error('Canvas fejlede'),{code:'003'}));return;}
       if(blob.size/1024<=maxKb||q<=MIN_Q){setProg(idx,95);resolve(blob);}
       else{q=Math.max(MIN_Q,q-0.03);next();}
     },'image/jpeg',q);
