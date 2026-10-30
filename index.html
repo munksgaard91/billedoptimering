@@ -288,14 +288,15 @@
    003 canvas/hukommelse · 004 ZIP · 005 ukendt · 006 HEIC-bibliotek
    kunne ikke hentes
    ===================================================================== */
-const APP_VERSION='2.2.1';
+const APP_VERSION='2.3.0';
 
 const LIMITS={70:{kb:250,q:0.82,label:'God'},82:{kb:350,q:0.90,label:'Høj'},92:{kb:500,q:0.96,label:'Maksimal'}};
 const CROP_W=1920,CROP_H=1280,MIN_Q=0.50;
 const PX_PER_KB=25000; // over ca. 12,5 MP (500 KB) kan "Bevar proportioner" ikke ramme grænsen
 const OK_TYPES=['image/jpeg','image/png','image/webp','image/gif','image/bmp','image/avif','image/heic','image/heif'];
 const OK_EXT=/\.(jpe?g|png|webp|gif|bmp|avif|heic|heif)$/i;
-const HEIC_URL='https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+// heic-to (libheif 1.23.6) kan læse nyere iPhone-billeder med HDR gain map (iOS 18), som heic2any fejlede på
+const HEIC_URL='https://cdn.jsdelivr.net/npm/heic-to@1.6.6/dist/iife/heic-to.js';
 const LS_KEY='bo-billedkomprimering';
 const RUN_TEXT='Optimer og download filer';
 const STATUS={wait:['s-wait','Klar'],work:['s-work','Behandler…'],done:['s-done','Færdig'],err:['s-err','Fejl']};
@@ -416,10 +417,10 @@ el.tCopy.addEventListener('click',async()=>{
 /* ---------- HEIC: biblioteket hentes først når der er brug for det ---------- */
 let heicLib=null;
 function loadHeicLib(){
-  if(window.heic2any)return Promise.resolve();
+  if(window.HeicTo)return Promise.resolve();
   heicLib??=new Promise((res,rej)=>{
     const sc=Object.assign(document.createElement('script'),{src:HEIC_URL,async:true});
-    sc.onload=()=>window.heic2any?res():rej(new Error('heic2any mangler'));
+    sc.onload=()=>window.HeicTo?res():rej(new Error('HeicTo mangler'));
     sc.onerror=()=>{sc.remove();rej(new Error('HEIC-biblioteket kunne ikke hentes'));};
     document.head.append(sc);
   }).catch(err=>{heicLib=null;throw Object.assign(err,{code:'006'});}); // næste forsøg prøver igen
@@ -720,20 +721,24 @@ async function runCompression(){
 }
 
 async function processImage(f,startQ,limitKb,onProgress){
-  let src=f.file;
-  if(isHeic(src)){
+  let img;
+  if(isHeic(f.file)){
     onProgress(8);
     await loadHeicLib();
     try{
-      const out=await window.heic2any({blob:src,toType:'image/png'});
-      src=Array.isArray(out)?out[0]:out;
-    }catch{throw Object.assign(new Error('HEIC-konvertering fejlede'),{code:'001'});}
+      // Afkodes direkte til et bitmap, uden en mellemliggende PNG (hurtigere)
+      img=await window.HeicTo.heicTo({blob:f.file,type:'bitmap'});
+    }catch(err){
+      console.error(err);
+      throw Object.assign(new Error('HEIC-konvertering fejlede'),{code:'001'});
+    }
+  }else{
+    img=await loadImage(f.file);
   }
-  const img=await loadImage(src);
-  if(!f.w){f.w=img.naturalWidth;f.h=img.naturalHeight;}
+  const sw=img.naturalWidth||img.width,sh=img.naturalHeight||img.height,landscape=sw>=sh;
+  if(!f.w){f.w=sw;f.h=sh;}
   onProgress(30);
 
-  const sw=img.naturalWidth,sh=img.naturalHeight,landscape=sw>=sh;
   const w=settings.crop?(landscape?CROP_W:CROP_H):sw;
   const h=settings.crop?(landscape?CROP_H:CROP_W):sh;
   const cv=document.createElement('canvas');
@@ -754,7 +759,8 @@ async function processImage(f,startQ,limitKb,onProgress){
     onProgress(60);
     out=await compressBest(cv,startQ,limitKb*1024,onProgress);
   }finally{
-    cv.width=cv.height=0;img.src=''; // frigiv hukommelse med det samme
+    cv.width=cv.height=0; // frigiv hukommelse med det samme
+    if(img.close)img.close();else img.src='';
   }
   // Gør aldrig et billede større: er originalen en mindre JPG, bruges den uændret
   if(!settings.crop&&isJpeg(f.file)&&out.size>=f.file.size){out=f.file;f.keptOriginal=true;}
